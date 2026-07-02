@@ -10,6 +10,8 @@ class UserController extends Controller
 {
     public function index()
     {
+        $this->authorize('manage-users');
+
         $users = User::with('role')->latest()->paginate(15);
 
         return view('users.index', compact('users'));
@@ -17,6 +19,8 @@ class UserController extends Controller
 
     public function show(User $user)
     {
+        $this->authorize('manage-users');
+
         $user->load('role');
 
         return view('users.show', compact('user'));
@@ -24,6 +28,8 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
+        $this->authorize('manage-users');
+
         $roles = Role::all();
 
         return view('users.edit', compact('user', 'roles'));
@@ -31,12 +37,13 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+        $this->authorize('manage-users');
+
         $validated = $request->validate([
             'role_id' => ['required', 'exists:roles,id'],
             'name' => ['required', 'string', 'max:100'],
         ]);
 
-        // Prevent removing the last admin
         // Prevent self-demotion
         if ($user->is(auth()->user()) && $user->hasRole('admin')) {
             $newRoleName = Role::find($validated['role_id'])?->name;
@@ -60,6 +67,8 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
+        $this->authorize('manage-users');
+
         // Prevent deleting the last admin
         if ($user->hasRole('admin')) {
             $adminCount = User::whereHas('role', fn($q) => $q->where('name', 'admin'))->count();
