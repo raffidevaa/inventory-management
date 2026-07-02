@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
+use App\Models\Category;
 use App\Models\Product;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -12,7 +15,9 @@ class ProductController extends Controller
         $this->authorize('viewAny', Product::class);
 
         $products = Product::with('category')
-            ->when(request('search'), fn($q, $s) => $q->where('name', 'ilike', "%{$s}%")->orWhere('code', 'ilike', "%{$s}%"))
+            ->when(request('search'), fn($q, $s) => $q->where(fn($inner) => $inner
+                ->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($s) . '%'])
+                ->orWhereRaw('LOWER(code) LIKE ?', ['%' . strtolower($s) . '%'])))
             ->latest()
             ->paginate(15)
             ->withQueryString();
@@ -24,15 +29,23 @@ class ProductController extends Controller
     {
         $this->authorize('create', Product::class);
 
-        return view('products.create');
+        $categories = Category::orderBy('name')->get();
+
+        return view('products.create', compact('categories'));
     }
 
-    public function store(Request $request)
+    public function store(StoreProductRequest $request)
     {
-        $this->authorize('create', Product::class);
+        $validated = $request->validated();
+        $validated['stock_available'] = $validated['stock'];
 
-        // Full implementation in Day 3 (StoreProductRequest + CategoryController)
-        abort(501, 'Not yet implemented.');
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image')->store('products', 'public');
+        }
+
+        Product::create($validated);
+
+        return redirect()->route('products.index')->with('success', 'Product added successfully.');
     }
 
     public function show(Product $product)
@@ -48,20 +61,35 @@ class ProductController extends Controller
     {
         $this->authorize('update', $product);
 
-        return view('products.edit', compact('product'));
+        $categories = Category::orderBy('name')->get();
+
+        return view('products.edit', compact('product', 'categories'));
     }
 
-    public function update(Request $request, Product $product)
+    public function update(UpdateProductRequest $request, Product $product)
     {
-        $this->authorize('update', $product);
+        $validated = $request->validated();
 
-        abort(501, 'Not yet implemented.');
+        if ($request->hasFile('image')) {
+            if ($product->image) {
+                Storage::disk('public')->delete($product->image);
+            }
+            $validated['image'] = $request->file('image')->store('products', 'public');
+        } else {
+            unset($validated['image']);
+        }
+
+        $product->update($validated);
+
+        return redirect()->route('products.show', $product)->with('success', 'Product updated successfully.');
     }
 
     public function destroy(Product $product)
     {
         $this->authorize('delete', $product);
 
-        abort(501, 'Not yet implemented.');
+        $product->delete();
+
+        return redirect()->route('products.index')->with('success', 'Product deleted successfully.');
     }
 }

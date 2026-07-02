@@ -33,7 +33,9 @@ class ProductApiController extends Controller
         $this->authorize('viewAny', Product::class);
 
         $products = Product::with('category')
-            ->when($request->search, fn($q, $s) => $q->where('name', 'ilike', "%{$s}%")->orWhere('code', 'ilike', "%{$s}%"))
+            ->when($request->search, fn($q, $s) => $q->where(fn($inner) => $inner
+                ->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($s) . '%'])
+                ->orWhereRaw('LOWER(code) LIKE ?', ['%' . strtolower($s) . '%'])))
             ->when($request->category_id, fn($q, $id) => $q->where('category_id', $id))
             ->latest()
             ->paginate(15);
