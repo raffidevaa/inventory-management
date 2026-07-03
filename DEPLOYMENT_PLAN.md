@@ -3,6 +3,7 @@
 ## Context
 
 Laravel 13 + PostgreSQL inventory management app needs a production deployment pipeline from scratch. Currently there is no Docker setup, no CI/CD, and product images are stored on the local disk. This plan covers:
+
 - Dockerizing the app and PostgreSQL
 - Migrating product image storage to GCS
 - Pushing images to Artifact Registry
@@ -16,6 +17,7 @@ Laravel 13 + PostgreSQL inventory management app needs a production deployment p
 ### 1.1 Add GCS Flysystem Package
 
 Add to `composer.json` under `require`:
+
 ```json
 "google/cloud-storage": "^1.43",
 "league/flysystem-google-cloud-storage": "^3.3"
@@ -26,6 +28,7 @@ Run `composer require google/cloud-storage league/flysystem-google-cloud-storage
 ### 1.2 Modify `config/filesystems.php`
 
 Add a `gcs` disk entry in the `disks` array:
+
 ```php
 'gcs' => [
     'driver'        => 'gcs',
@@ -52,6 +55,7 @@ Blade views already call `Storage::url()` via the default disk — no view chang
 ### 1.4 Update `.env.example`
 
 Add after the `AWS_*` block:
+
 ```env
 GCS_PROJECT_ID=your-gcp-project-id
 GCS_BUCKET=your-bucket-name
@@ -66,17 +70,20 @@ GCS_KEY_FILE_PATH=
 ### `Dockerfile` (multi-stage)
 
 **Stage 1 — `node:20-alpine` (frontend)**
+
 - Copy `package.json`, `package-lock.json`, Vite/Tailwind config, `resources/`
 - `npm ci --ignore-scripts && npm run build`
 - Output: `public/build/`
 
 **Stage 2 — `composer:2.7` (vendor)**
+
 - Copy `composer.json`, `composer.lock`
 - `composer install --no-dev --no-scripts --no-autoloader --prefer-dist --no-interaction`
 - Copy all app source files
 - `composer dump-autoload --optimize`
 
 **Stage 3 — `php:8.3-fpm-alpine` (final)**
+
 - `apk add`: `nginx supervisor postgresql-client libpq-dev libpng-dev libjpeg-turbo-dev freetype-dev icu-dev libzip-dev oniguruma-dev`
 - `docker-php-ext-install`: `pdo pdo_pgsql pgsql opcache bcmath mbstring tokenizer xml ctype fileinfo gd intl zip`
 - `COPY --from=vendor` vendor dir and app source
@@ -111,51 +118,51 @@ docker-compose*.yml
 
 ```yaml
 services:
-  app:
-    build: .
-    ports: ["8000:80"]
-    volumes:
-      - .:/var/www/html
-      - .env:/var/www/html/.env
-    environment:
-      DB_HOST: postgres
-    depends_on: [postgres]
+    app:
+        build: .
+        ports: ["8000:80"]
+        volumes:
+            - .:/var/www/html
+            - .env:/var/www/html/.env
+        environment:
+            DB_HOST: postgres
+        depends_on: [postgres]
 
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: inventory_management
-      POSTGRES_USER: inventory_user
-      POSTGRES_PASSWORD: secret
-    ports: ["5432:5432"]
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+    postgres:
+        image: postgres:16-alpine
+        environment:
+            POSTGRES_DB: inventory_management
+            POSTGRES_USER: inventory_user
+            POSTGRES_PASSWORD: secret
+        ports: ["5432:5432"]
+        volumes:
+            - pgdata:/var/lib/postgresql/data
 
 volumes:
-  pgdata:
+    pgdata:
 ```
 
 ### `docker-compose.prod.yml` (production on VM)
 
 ```yaml
 services:
-  app:
-    image: ${APP_IMAGE:-asia-southeast2-docker.pkg.dev/PROJECT_ID/inventory-app/app:latest}
-    restart: unless-stopped
-    env_file: .env
-    ports: ["80:80"]
-    depends_on: [postgres]
+    app:
+        image: ${APP_IMAGE:-asia-southeast2-docker.pkg.dev/PROJECT_ID/inventory-app/app:latest}
+        restart: unless-stopped
+        env_file: .env
+        ports: ["80:80"]
+        depends_on: [postgres]
 
-  postgres:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    env_file: .env
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    # No external ports in production
+    postgres:
+        image: postgres:16-alpine
+        restart: unless-stopped
+        env_file: .env
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+        # No external ports in production
 
 volumes:
-  pgdata:
+    pgdata:
 ```
 
 ### `docker/nginx/default.conf`
@@ -261,6 +268,7 @@ exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
 ## Phase 3 — GCP Infrastructure (gcloud CLI)
 
 Set variables first:
+
 ```bash
 export PROJECT_ID="inventory-mgmt-prod"
 export REGION="asia-southeast2"   # Jakarta
@@ -269,12 +277,14 @@ export REPO_NAME="inventory-app"
 ```
 
 ### Enable APIs
+
 ```bash
 gcloud services enable compute.googleapis.com artifactregistry.googleapis.com \
     storage.googleapis.com iam.googleapis.com cloudresourcemanager.googleapis.com
 ```
 
 ### VPC + Firewall
+
 ```bash
 gcloud compute networks create inventory-vpc --subnet-mode=custom
 gcloud compute networks subnets create inventory-subnet \
@@ -287,6 +297,7 @@ gcloud compute firewall-rules create allow-internal --network=inventory-vpc --al
 ```
 
 ### Artifact Registry
+
 ```bash
 gcloud artifacts repositories create $REPO_NAME \
     --repository-format=docker --location=$REGION
@@ -295,6 +306,7 @@ gcloud artifacts repositories create $REPO_NAME \
 Image prefix: `asia-southeast2-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/app`
 
 ### GCS Bucket
+
 ```bash
 export BUCKET_NAME="inventory-product-images-$(openssl rand -hex 4)"
 echo "Save this bucket name: $BUCKET_NAME"
@@ -310,6 +322,7 @@ gcloud storage buckets add-iam-policy-binding gs://$BUCKET_NAME \
 ### Service Accounts
 
 **VM identity SA** (Artifact Registry pull + GCS write):
+
 ```bash
 gcloud iam service-accounts create inventory-vm-sa \
     --display-name="Inventory VM Service Account"
@@ -324,6 +337,7 @@ gcloud storage buckets add-iam-policy-binding gs://$BUCKET_NAME \
 ```
 
 **CI/CD SA** (Artifact Registry push only):
+
 ```bash
 gcloud iam service-accounts create inventory-cicd-sa \
     --display-name="Inventory CI/CD Service Account"
@@ -340,6 +354,7 @@ rm /tmp/cicd-sa-key.json
 ```
 
 ### Compute Engine VM
+
 ```bash
 gcloud compute addresses create inventory-vm-ip --region=$REGION
 export STATIC_IP=$(gcloud compute addresses describe inventory-vm-ip --region=$REGION --format='get(address)')
@@ -379,6 +394,7 @@ nano /home/ubuntu/inventory-app/.env
 ```
 
 Production `.env` key values:
+
 ```env
 APP_ENV=production
 APP_DEBUG=false
@@ -410,6 +426,7 @@ POSTGRES_PASSWORD=<strong-password>
 ```
 
 Copy compose file and do first deploy:
+
 ```bash
 # From local machine:
 gcloud compute scp docker-compose.prod.yml ubuntu@inventory-vm:/home/ubuntu/inventory-app/ --zone=$ZONE
@@ -428,6 +445,7 @@ docker compose -f docker-compose.prod.yml exec app php artisan db:seed
 ### `.github/workflows/ci.yml` (all pushes + PRs)
 
 Steps:
+
 1. Checkout
 2. `shivammathur/setup-php@v2` → PHP 8.3 + extensions: `pdo pdo_sqlite sqlite3 mbstring xml bcmath gd zip intl`
 3. `composer install` (with dev deps for PHPUnit)
@@ -438,6 +456,7 @@ Steps:
 ### `.github/workflows/deploy.yml` (push to `main` only)
 
 **Job 1 — `build-and-push`:**
+
 1. `google-github-actions/auth@v2` with `credentials_json: ${{ secrets.GCP_SA_KEY }}`
 2. `gcloud auth configure-docker asia-southeast2-docker.pkg.dev`
 3. Extract short SHA (`${GITHUB_SHA::8}`) → output as `image_tag`
@@ -445,26 +464,28 @@ Steps:
 5. Push both tags to Artifact Registry
 
 **Job 2 — `deploy`** (needs job 1):
+
 1. `appleboy/ssh-action@v1` using `VM_SSH_HOST`, `VM_SSH_USER`, `VM_SSH_KEY`
 2. On VM:
-   ```bash
-   cd /home/ubuntu/inventory-app
-   docker pull .../app:<sha>
-   APP_IMAGE=".../app:<sha>" docker compose -f docker-compose.prod.yml up -d --no-build
-   docker image prune -f --filter "until=24h"
-   ```
+    ```bash
+    cd /home/ubuntu/inventory-app
+    docker pull .../app:<sha>
+    APP_IMAGE=".../app:<sha>" docker compose -f docker-compose.prod.yml up -d --no-build
+    docker image prune -f --filter "until=24h"
+    ```
 
 ### GitHub Actions Secrets
 
-| Secret | Description |
-|---|---|
-| `GCP_PROJECT_ID` | GCP project ID |
-| `GCP_SA_KEY` | Base64-encoded JSON key for `inventory-cicd-sa` |
-| `VM_SSH_HOST` | Static external IP of the VM |
-| `VM_SSH_USER` | `ubuntu` |
-| `VM_SSH_KEY` | Ed25519 private key for GitHub Actions SSH |
+| Secret           | Description                                     |
+| ---------------- | ----------------------------------------------- |
+| `GCP_PROJECT_ID` | GCP project ID                                  |
+| `GCP_SA_KEY`     | Base64-encoded JSON key for `inventory-cicd-sa` |
+| `VM_SSH_HOST`    | Static external IP of the VM                    |
+| `VM_SSH_USER`    | `ubuntu`                                        |
+| `VM_SSH_KEY`     | Ed25519 private key for GitHub Actions SSH      |
 
 Generate deploy SSH key:
+
 ```bash
 ssh-keygen -t ed25519 -C "github-actions-deploy" -f /tmp/gh-deploy-key -N ""
 
@@ -513,10 +534,10 @@ docker compose exec app supervisorctl status
 
 ## Key Trade-offs
 
-| Decision | Rationale |
-|---|---|
-| Postgres in Docker (not Cloud SQL) | Simpler per requirements; add `pg_dump` to GCS for backups. Upgrade to Cloud SQL for production HA. |
-| ADC for GCS auth (no JSON key in container) | VM's attached SA grants GCS access via metadata server — no secret management in app. |
-| Supervisor (nginx + php-fpm + queue in one container) | Avoids inter-container networking on a single VM. Split if scaling out. |
-| SHA-pinned deploys | Both `:latest` and `:<sha>` pushed; deploy pins to SHA to prevent race conditions. |
-| `league/flysystem-google-cloud-storage` over S3-compat | Native adapter avoids GCS XML API ACL incompatibilities with Laravel's S3 driver. |
+| Decision                                               | Rationale                                                                                           |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| Postgres in Docker (not Cloud SQL)                     | Simpler per requirements; add `pg_dump` to GCS for backups. Upgrade to Cloud SQL for production HA. |
+| ADC for GCS auth (no JSON key in container)            | VM's attached SA grants GCS access via metadata server — no secret management in app.               |
+| Supervisor (nginx + php-fpm + queue in one container)  | Avoids inter-container networking on a single VM. Split if scaling out.                             |
+| SHA-pinned deploys                                     | Both `:latest` and `:<sha>` pushed; deploy pins to SHA to prevent race conditions.                  |
+| `league/flysystem-google-cloud-storage` over S3-compat | Native adapter avoids GCS XML API ACL incompatibilities with Laravel's S3 driver.                   |
