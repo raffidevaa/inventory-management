@@ -15,9 +15,9 @@ class ProductController extends Controller
         $this->authorize('viewAny', Product::class);
 
         $products = Product::with('category')
-            ->when(request('search'), fn($q, $s) => $q->where(fn($inner) => $inner
-                ->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($s) . '%'])
-                ->orWhereRaw('LOWER(code) LIKE ?', ['%' . strtolower($s) . '%'])))
+            ->when(request('search'), fn ($q, $s) => $q->where(fn ($inner) => $inner
+                ->whereRaw('LOWER(name) LIKE ?', ['%'.strtolower($s).'%'])
+                ->orWhereRaw('LOWER(code) LIKE ?', ['%'.strtolower($s).'%'])))
             ->latest()
             ->paginate(15)
             ->withQueryString();
@@ -40,7 +40,9 @@ class ProductController extends Controller
         $validated['stock_available'] = $validated['stock'];
 
         if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('products', 'public');
+            $file = $request->file('image');
+            $filename = $validated['code'].'.'.$file->extension();
+            $validated['image'] = $file->storeAs('products', $filename, config('filesystems.default', 'public'));
         }
 
         Product::create($validated);
@@ -72,9 +74,12 @@ class ProductController extends Controller
 
         if ($request->hasFile('image')) {
             if ($product->image) {
-                Storage::disk('public')->delete($product->image);
+                Storage::disk(config('filesystems.default', 'public'))->delete($product->image);
             }
-            $validated['image'] = $request->file('image')->store('products', 'public');
+            $file = $request->file('image');
+            $code = $validated['code'] ?? $product->code;
+            $filename = $code.'.'.$file->extension();
+            $validated['image'] = $file->storeAs('products', $filename, config('filesystems.default', 'public'));
         } else {
             unset($validated['image']);
         }
