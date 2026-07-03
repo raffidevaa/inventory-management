@@ -97,9 +97,7 @@ class BorrowingController extends Controller
 
     public function edit(Borrowing $borrowing)
     {
-        $this->authorize('update', $borrowing);
-
-        return view('borrowings.edit', compact('borrowing'));
+        return redirect()->route('borrowings.show', $borrowing);
     }
 
     public function update(Request $request, Borrowing $borrowing)

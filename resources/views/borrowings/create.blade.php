@@ -54,7 +54,14 @@
                             </button>
                         </div>
 
-                        <x-input-error :messages="$errors->get('items')" class="mb-3" />
+                        {{-- Show any item-level errors returned from controller --}}
+                        @if ($errors->hasAny(array_merge(['items'], array_keys($errors->toArray()))))
+                            @foreach ($errors->all() as $error)
+                                @if (str_starts_with($error, "'") || str_contains($error, 'stock') || str_contains($error, 'damaged') || str_contains($error, 'borrow'))
+                                    <div class="mb-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">{{ $error }}</div>
+                                @endif
+                            @endforeach
+                        @endif
 
                         <template x-for="(item, index) in items" :key="index">
                             <div class="flex gap-3 mb-3 items-start">
@@ -69,9 +76,6 @@
                                             </option>
                                         </template>
                                     </select>
-                                    <span class="text-xs text-red-600 mt-1 block"
-                                        x-text="'{{ $errors->first('items.' . '__INDEX__' . '.product_id') }}'.replace('__INDEX__', index)">
-                                    </span>
                                 </div>
                                 <div class="w-24">
                                     <input type="number" :name="'items[' + index + '][quantity]'"
