@@ -34,6 +34,7 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
+                            <th class="px-6 py-3"></th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
@@ -46,6 +47,14 @@
                     <tbody class="bg-white divide-y divide-gray-200">
                         @forelse ($products as $product)
                             <tr>
+                                <td class="px-4 py-2 w-12">
+                                    @if ($product->image)
+                                        <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}"
+                                            class="h-10 w-10 object-cover rounded border" />
+                                    @else
+                                        <div class="h-10 w-10 bg-gray-100 rounded border flex items-center justify-center text-gray-300 text-xs">—</div>
+                                    @endif
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{{ $product->code }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $product->name }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $product->category?->name ?? '—' }}</td>
@@ -73,7 +82,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-6 py-8 text-center text-gray-400">No products found.</td>
+                                <td colspan="8" class="px-6 py-8 text-center text-gray-400">No products found.</td>
                             </tr>
                         @endforelse
                     </tbody>
