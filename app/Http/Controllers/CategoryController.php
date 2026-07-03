@@ -25,7 +25,14 @@ class CategoryController extends Controller
     {
         $this->authorize('manage-inventory');
 
-        abort(501, 'Not yet implemented.');
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:100', 'unique:categories,name'],
+            'description' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        Category::create($validated);
+
+        return redirect()->route('categories.index')->with('success', 'Category created successfully.');
     }
 
     public function show(Category $category)
@@ -46,13 +53,22 @@ class CategoryController extends Controller
     {
         $this->authorize('manage-inventory');
 
-        abort(501, 'Not yet implemented.');
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:100', "unique:categories,name,{$category->id}"],
+            'description' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $category->update($validated);
+
+        return redirect()->route('categories.index')->with('success', 'Category updated successfully.');
     }
 
     public function destroy(Category $category)
     {
         $this->authorize('manage-inventory');
 
-        abort(501, 'Not yet implemented.');
+        $category->delete();
+
+        return redirect()->route('categories.index')->with('success', 'Category deleted successfully.');
     }
 }
