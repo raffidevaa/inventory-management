@@ -18,9 +18,11 @@
                     <x-nav-link :href="route('products.index')" :active="request()->routeIs('products.*')">
                         Products
                     </x-nav-link>
-                    <x-nav-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">
-                        Categories
-                    </x-nav-link>
+                    @if (Auth::user()->hasRole('admin'))
+                        <x-nav-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">
+                            Categories
+                        </x-nav-link>
+                    @endif
                     <x-nav-link :href="route('borrowings.index')" :active="request()->routeIs('borrowings.*')">
                         Borrowings
                     </x-nav-link>
@@ -86,9 +88,11 @@
             <x-responsive-nav-link :href="route('products.index')" :active="request()->routeIs('products.*')">
                 Products
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">
-                Categories
-            </x-responsive-nav-link>
+            @if (Auth::user()->hasRole('admin'))
+                <x-responsive-nav-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">
+                    Categories
+                </x-responsive-nav-link>
+            @endif
             <x-responsive-nav-link :href="route('borrowings.index')" :active="request()->routeIs('borrowings.*')">
                 Borrowings
             </x-responsive-nav-link>

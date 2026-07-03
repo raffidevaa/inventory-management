@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">Categories</h2>
-            @can('manage-inventory')
+            @can('manage-categories')
                 <a href="{{ route('categories.create') }}">
                     <x-primary-button>+ Add Category</x-primary-button>
                 </a>
@@ -34,7 +34,7 @@
                                     </a>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                                    @can('manage-inventory')
+                                    @can('manage-categories')
                                         <a href="{{ route('categories.edit', $category) }}" class="text-yellow-600 hover:text-yellow-900">Edit</a>
                                         <form method="POST" action="{{ route('categories.destroy', $category) }}" class="inline"
                                               onsubmit="return confirm('Delete this category? Products will not be deleted.')">
@@ -49,7 +49,7 @@
                             <tr>
                                 <td colspan="4" class="px-6 py-12 text-center">
                                     <p class="text-gray-400 text-sm">No categories yet.</p>
-                                    @can('manage-inventory')
+                                    @can('manage-categories')
                                         <a href="{{ route('categories.create') }}" class="mt-2 inline-block text-indigo-600 hover:underline text-sm">Add first category</a>
                                     @endcan
                                 </td>

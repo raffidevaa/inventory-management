@@ -9,6 +9,8 @@ class CategoryController extends Controller
 {
     public function index()
     {
+        $this->authorize('manage-categories');
+
         $categories = Category::withCount('products')->latest()->paginate(15);
 
         return view('categories.index', compact('categories'));
@@ -16,14 +18,14 @@ class CategoryController extends Controller
 
     public function create()
     {
-        $this->authorize('manage-inventory');
+        $this->authorize('manage-categories');
 
         return view('categories.create');
     }
 
     public function store(Request $request)
     {
-        $this->authorize('manage-inventory');
+        $this->authorize('manage-categories');
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100', 'unique:categories,name'],
@@ -37,6 +39,8 @@ class CategoryController extends Controller
 
     public function show(Category $category)
     {
+        $this->authorize('manage-categories');
+
         $category->load('products');
 
         return view('categories.show', compact('category'));
@@ -44,14 +48,14 @@ class CategoryController extends Controller
 
     public function edit(Category $category)
     {
-        $this->authorize('manage-inventory');
+        $this->authorize('manage-categories');
 
         return view('categories.edit', compact('category'));
     }
 
     public function update(Request $request, Category $category)
     {
-        $this->authorize('manage-inventory');
+        $this->authorize('manage-categories');
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100', "unique:categories,name,{$category->id}"],
@@ -65,7 +69,7 @@ class CategoryController extends Controller
 
     public function destroy(Category $category)
     {
-        $this->authorize('manage-inventory');
+        $this->authorize('manage-categories');
 
         $category->delete();
 
