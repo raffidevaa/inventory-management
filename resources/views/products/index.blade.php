@@ -15,13 +15,6 @@
     <div class="py-6">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-4">
 
-            {{-- Flash message --}}
-            @if (session('success'))
-                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-                    {{ session('success') }}
-                </div>
-            @endif
-
             {{-- Search --}}
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4">
                 <form method="GET" action="{{ route('products.index') }}" class="flex gap-2">
@@ -37,6 +30,7 @@
 
             {{-- Table --}}
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
@@ -59,17 +53,7 @@
                                     {{ $product->stock_available }} / {{ $product->stock }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    @php
-                                        $badge = match($product->condition) {
-                                            'good'             => 'bg-green-100 text-green-800',
-                                            'lightly_damaged'  => 'bg-yellow-100 text-yellow-800',
-                                            'heavily_damaged'  => 'bg-red-100 text-red-800',
-                                            default            => 'bg-gray-100 text-gray-800',
-                                        };
-                                    @endphp
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $badge }}">
-                                        {{ str_replace('_', ' ', $product->condition) }}
-                                    </span>
+                                    <x-status-badge type="condition" :value="$product->condition" />
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $product->location ?? '—' }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
@@ -94,6 +78,7 @@
                         @endforelse
                     </tbody>
                 </table>
+                </div>
 
                 @if ($products->hasPages())
                     <div class="px-6 py-4 border-t">

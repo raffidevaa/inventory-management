@@ -7,17 +7,7 @@
                     Borrowing — {{ $borrowing->borrower_name }}
                 </h2>
             </div>
-            @php
-                $statusBadge = match($borrowing->status) {
-                    'borrowed' => 'bg-yellow-100 text-yellow-800',
-                    'returned' => 'bg-green-100 text-green-800',
-                    'overdue'  => 'bg-red-100 text-red-800',
-                    default    => 'bg-gray-100 text-gray-700',
-                };
-            @endphp
-            <span class="px-3 py-1 rounded-full text-sm font-semibold capitalize {{ $statusBadge }}">
-                {{ $borrowing->status }}
-            </span>
+            <x-status-badge type="borrowing-status" :value="$borrowing->status" class="px-3 py-1 text-sm" />
         </div>
     </x-slot>
 

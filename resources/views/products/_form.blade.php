@@ -22,8 +22,7 @@
     {{-- Category --}}
     <div>
         <x-input-label for="category_id" value="Category" />
-        <select id="category_id" name="category_id" required
-            class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+        <x-select id="category_id" name="category_id" required class="mt-1 block w-full">
             <option value="">— Select category —</option>
             @foreach ($categories as $cat)
                 <option value="{{ $cat->id }}"
@@ -31,19 +30,18 @@
                     {{ $cat->name }}
                 </option>
             @endforeach
-        </select>
+        </x-select>
         <x-input-error :messages="$errors->get('category_id')" class="mt-2" />
     </div>
 
     {{-- Condition --}}
     <div>
         <x-input-label for="condition" value="Condition" />
-        <select id="condition" name="condition" required
-            class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+        <x-select id="condition" name="condition" required class="mt-1 block w-full">
             <option value="good" {{ old('condition', $product->condition ?? '') === 'good' ? 'selected' : '' }}>Good</option>
             <option value="lightly_damaged" {{ old('condition', $product->condition ?? '') === 'lightly_damaged' ? 'selected' : '' }}>Lightly Damaged</option>
             <option value="heavily_damaged" {{ old('condition', $product->condition ?? '') === 'heavily_damaged' ? 'selected' : '' }}>Heavily Damaged</option>
-        </select>
+        </x-select>
         <x-input-error :messages="$errors->get('condition')" class="mt-2" />
     </div>
 

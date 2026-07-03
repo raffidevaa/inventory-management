@@ -7,7 +7,7 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
             {{-- Stats Cards (2x2) --}}
-            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem">
+            <div class="grid grid-cols-2 gap-4">
 
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 flex flex-col items-center justify-center text-center">
                     <div class="p-2 bg-blue-50 rounded-full">

@@ -9,7 +9,8 @@
     <div class="py-6">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <form method="POST" action="{{ route('products.store') }}" enctype="multipart/form-data">
+                <form method="POST" action="{{ route('products.store') }}" enctype="multipart/form-data"
+                      x-data="{ loading: false }" @submit="loading = true">
                     @csrf
 
                     @include('products._form')
@@ -18,7 +19,10 @@
                         <a href="{{ route('products.index') }}">
                             <x-secondary-button type="button">Cancel</x-secondary-button>
                         </a>
-                        <x-primary-button type="submit">Save Product</x-primary-button>
+                        <x-primary-button type="submit" x-bind:disabled="loading" x-bind:class="loading ? 'opacity-50 cursor-not-allowed' : ''">
+                            <span x-show="!loading">Save Product</span>
+                            <span x-show="loading">Saving…</span>
+                        </x-primary-button>
                     </div>
                 </form>
             </div>

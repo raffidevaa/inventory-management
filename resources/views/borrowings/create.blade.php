@@ -11,9 +11,11 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
                 <form method="POST" action="{{ route('borrowings.store') }}"
                       x-data="{
+                          loading: false,
                           items: [{ product_id: '', quantity: 1 }],
                           products: {{ Js::from($products) }}
-                      }">
+                      }"
+                      @submit="loading = true">
                     @csrf
 
                     {{-- Borrower info --}}
@@ -87,7 +89,7 @@
                                     x-show="items.length > 1"
                                     class="mt-1 text-red-400 hover:text-red-600">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                 </button>
                             </div>
@@ -98,7 +100,10 @@
                         <a href="{{ route('borrowings.index') }}">
                             <x-secondary-button type="button">Cancel</x-secondary-button>
                         </a>
-                        <x-primary-button type="submit">Submit Borrowing</x-primary-button>
+                        <x-primary-button type="submit" x-bind:disabled="loading" x-bind:class="loading ? 'opacity-50 cursor-not-allowed' : ''">
+                            <span x-show="!loading">Submit Borrowing</span>
+                            <span x-show="loading">Submitting…</span>
+                        </x-primary-button>
                     </div>
                 </form>
             </div>

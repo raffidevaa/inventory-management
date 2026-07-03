@@ -27,6 +27,7 @@
 
             {{-- Table --}}
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
@@ -55,17 +56,7 @@
                                     {{ $borrowing->due_date->format('d M Y') }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    @php
-                                        $statusBadge = match($borrowing->status) {
-                                            'borrowed' => 'bg-yellow-100 text-yellow-800',
-                                            'returned' => 'bg-green-100 text-green-800',
-                                            'overdue'  => 'bg-red-100 text-red-800',
-                                            default    => 'bg-gray-100 text-gray-700',
-                                        };
-                                    @endphp
-                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize {{ $statusBadge }}">
-                                        {{ $borrowing->status }}
-                                    </span>
+                                    <x-status-badge type="borrowing-status" :value="$borrowing->status" />
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                                     {{ $borrowing->user?->name ?? '—' }}
@@ -86,6 +77,7 @@
                         @endforelse
                     </tbody>
                 </table>
+                </div>
                 @if ($borrowings->hasPages())
                     <div class="px-6 py-4 border-t">{{ $borrowings->links() }}</div>
                 @endif
