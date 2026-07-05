@@ -1,58 +1,155 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Inventory Management
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A web-based inventory and asset-borrowing management system built with Laravel 13. It tracks products (assets), their stock and condition, and the borrowing/return lifecycle — with role-based access control and a token-authenticated REST API alongside the web UI.
 
-## About Laravel
+Built during a Telkom internship.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Features
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Product & category management** — track code, name, stock, available stock, storage location, condition (`good` / `lightly_damaged` / `heavily_damaged`), and product image. Products use soft deletes.
+- **Borrowing lifecycle** — record borrowings with borrower details, borrow/due dates, and per-item condition. Items are checked out and returned with status tracking (`borrowed` / `returned` / `overdue`).
+- **Role-based access control** — three roles (`admin`, `staff`, `manager`) enforced through policies and a `role` middleware.
+- **Dashboard** — summary metrics and charts.
+- **REST API** — versioned (`/api/v1`) and authenticated with Laravel Sanctum tokens, documented via Swagger (L5-Swagger / OpenAPI).
+- **Image storage** — local disk by default, Google Cloud Storage in production.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Tech Stack
 
-## Learning Laravel
+- **PHP** 8.4, **Laravel** 13
+- **PostgreSQL** (default), SQLite (tests / CI)
+- **Laravel Sanctum** — API token authentication
+- **Laravel Breeze** — web auth scaffolding (Blade + Alpine.js)
+- **Tailwind CSS** 3 + Vite
+- **L5-Swagger** — OpenAPI documentation
+- **Google Cloud Storage** — production image storage
+- **Docker** + **Nginx** + **PHP-FPM** + **Supervisor** for deployment
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Roles & Permissions
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+| Capability                   | admin | staff | manager |
+| ---------------------------- | :---: | :---: | :-----: |
+| View products / borrowings   |   ✅   |   ✅   |    ✅    |
+| Create / update / delete products |   ✅   |   ✅   |    —    |
+| Create / update borrowings, process returns |   ✅   |   ✅   |    —    |
+| Restore / force-delete records |   ✅   |   —   |    —    |
+| Manage users                 |   ✅   |   —   |    —    |
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+Managers have read-only access; write operations are restricted to admin and staff.
 
-## Agentic Development
+## Requirements
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+- PHP 8.4+
+- Composer 2
+- Node.js 22+
+- PostgreSQL (or SQLite for local/testing)
+
+## Getting Started
 
 ```bash
-composer require laravel/boost --dev
+# 1. Install dependencies
+composer install
+npm install
 
-php artisan boost:install
+# 2. Environment
+cp .env.example .env
+php artisan key:generate
+
+# 3. Configure the database in .env (defaults to PostgreSQL)
+#    DB_DATABASE=inventory_management
+#    DB_USERNAME / DB_PASSWORD=...
+
+# 4. Migrate and seed
+php artisan migrate --seed
+
+# 5. Build frontend assets
+npm run build
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Run everything (server, queue, logs, Vite) with a single command:
 
-## Contributing
+```bash
+composer run dev
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Or start the server on its own:
 
-## Code of Conduct
+```bash
+php artisan serve
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+The app is available at `http://localhost:8000`.
 
-## Security Vulnerabilities
+### Seeded accounts
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+All seeded users share the password `password123`:
+
+| Role    | Email               |
+| ------- | ------------------- |
+| Admin   | `admin@telkom.com`  |
+| Staff   | `staff@telkom.com`  |
+| Manager | `manager@telkom.com`|
+
+## API
+
+The API is versioned under `/api/v1` and authenticated with Sanctum bearer tokens.
+
+```bash
+# Obtain a token
+curl -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Accept: application/json" \
+  -d "email=admin@telkom.com&password=password123"
+
+# Use the token
+curl http://localhost:8000/api/v1/products \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer <token>"
+```
+
+### Endpoints
+
+| Method | Endpoint                          | Description                    |
+| ------ | --------------------------------- | ----------------------------- |
+| POST   | `/api/v1/auth/login`              | Log in, returns a token       |
+| POST   | `/api/v1/auth/logout`             | Revoke the current token      |
+| —      | `/api/v1/products`                | Product resource (full CRUD)  |
+| GET/POST | `/api/v1/categories`            | List / create categories      |
+| GET/POST | `/api/v1/borrowings`            | List / create borrowings      |
+| GET    | `/api/v1/borrowings/{id}`         | Show a borrowing              |
+| PATCH  | `/api/v1/borrowings/{id}/return`  | Process a return              |
+| GET    | `/api/v1/dashboard/summary`       | Dashboard summary metrics     |
+| GET    | `/api/v1/dashboard/chart`         | Dashboard chart data          |
+
+### API documentation
+
+Interactive Swagger UI is available at `/api/documentation`. Regenerate the OpenAPI spec after changing annotations:
+
+```bash
+php artisan l5-swagger:generate
+```
+
+## Testing
+
+```bash
+php artisan test --compact
+```
+
+## Docker
+
+A local stack (app + PostgreSQL) is provided:
+
+```bash
+docker compose up --build
+```
+
+The app is served at `http://localhost:8000`. The production image (`Dockerfile`) bundles Nginx, PHP-FPM, and Supervisor, and is deployed via `docker-compose.prod.yml`.
+
+## Deployment / CI
+
+- **CI** (`.github/workflows/ci.yml`) — runs the test suite and builds frontend assets on pushes and PRs to `main`.
+- **Deploy** (`.github/workflows/deploy.yml`) — builds and pushes the Docker image to Google Artifact Registry, then deploys to a VM over SSH on pushes to `main`.
+
+In production, `FILESYSTEM_DISK=gcs` stores product images in Google Cloud Storage. Configure the `GCS_*` variables in `.env`.
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT
