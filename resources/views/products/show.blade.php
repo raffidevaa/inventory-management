@@ -33,7 +33,7 @@
                     {{-- Image --}}
                     <div class="sm:col-span-1">
                         @if ($product->image)
-                            <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}"
+                            <img src="{{ $product->image_url }}" alt="{{ $product->name }}"
                                 class="w-full h-48 object-cover rounded-lg border dark:border-gray-700" />
                         @else
                             <div class="w-full h-48 bg-gray-100 dark:bg-gray-700 rounded-lg border dark:border-gray-700 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm">

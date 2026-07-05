@@ -20,7 +20,7 @@
                     @if ($product->image)
                         <div class="mt-4">
                             <p class="text-sm text-gray-600 dark:text-gray-300 mb-1">Current image (uploading a new one will replace it):</p>
-                            <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}"
+                            <img src="{{ $product->image_url }}" alt="{{ $product->name }}"
                                 class="h-32 w-32 object-cover rounded-md border dark:border-gray-700" />
                         </div>
                     @endif

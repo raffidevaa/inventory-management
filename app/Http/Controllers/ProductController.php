@@ -14,15 +14,18 @@ class ProductController extends Controller
     {
         $this->authorize('viewAny', Product::class);
 
+        $categories = Category::orderBy('name')->get();
+
         $products = Product::with('category')
             ->when(request('search'), fn ($q, $s) => $q->where(fn ($inner) => $inner
                 ->whereRaw('LOWER(name) LIKE ?', ['%'.strtolower($s).'%'])
                 ->orWhereRaw('LOWER(code) LIKE ?', ['%'.strtolower($s).'%'])))
+            ->when(request('category'), fn ($q, $id) => $q->where('category_id', $id))
             ->latest()
-            ->paginate(15)
+            ->paginate(12)
             ->withQueryString();
 
-        return view('products.index', compact('products'));
+        return view('products.index', compact('products', 'categories'));
     }
 
     public function create()
