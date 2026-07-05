@@ -1,14 +1,14 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center gap-3">
-            <a href="{{ route('borrowings.index') }}" class="text-gray-500 hover:text-gray-700">← Borrowings</a>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">New Borrowing</h2>
+            <a href="{{ route('borrowings.index') }}" class="text-gray-500 dark:text-gray-400 hover:text-gray-700">← Borrowings</a>
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-100 leading-tight">New Borrowing</h2>
         </div>
     </x-slot>
 
     <div class="py-6">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
                 <form method="POST" action="{{ route('borrowings.store') }}"
                       x-data="{
                           loading: false,
@@ -41,17 +41,17 @@
                         <div class="sm:col-span-2">
                             <x-input-label for="notes" value="Notes (optional)" />
                             <textarea id="notes" name="notes" rows="2"
-                                class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm"
+                                class="mt-1 block w-full border-gray-300 dark:border-gray-600 focus:border-brand-500 focus:ring-brand-500 rounded-md shadow-sm text-sm"
                                 maxlength="500">{{ old('notes') }}</textarea>
                         </div>
                     </div>
 
                     {{-- Items --}}
-                    <div class="border-t pt-4">
+                    <div class="border-t dark:border-gray-700 pt-4">
                         <div class="flex items-center justify-between mb-3">
-                            <h3 class="text-sm font-semibold text-gray-700">Items to Borrow</h3>
+                            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Items to Borrow</h3>
                             <button type="button" @click="items.push({ product_id: '', quantity: 1 })"
-                                class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                                class="text-sm text-brand-600 hover:text-brand-800 font-medium">
                                 + Add Item
                             </button>
                         </div>
@@ -60,7 +60,7 @@
                         @if ($errors->hasAny(array_merge(['items'], array_keys($errors->toArray()))))
                             @foreach ($errors->all() as $error)
                                 @if (str_starts_with($error, "'") || str_contains($error, 'stock') || str_contains($error, 'damaged') || str_contains($error, 'borrow'))
-                                    <div class="mb-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">{{ $error }}</div>
+                                    <div class="mb-3 text-sm text-red-600 bg-red-50 border dark:border-gray-700 border-red-200 rounded p-2">{{ $error }}</div>
                                 @endif
                             @endforeach
                         @endif
@@ -70,7 +70,7 @@
                                 <div class="flex-1">
                                     <select :name="'items[' + index + '][product_id]'"
                                         x-model="item.product_id" required
-                                        class="block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm">
+                                        class="block w-full border-gray-300 dark:border-gray-600 focus:border-brand-500 focus:ring-brand-500 rounded-md shadow-sm text-sm">
                                         <option value="">— Select product —</option>
                                         <template x-for="p in products" :key="p.id">
                                             <option :value="p.id"
@@ -82,7 +82,7 @@
                                 <div class="w-24">
                                     <input type="number" :name="'items[' + index + '][quantity]'"
                                         x-model="item.quantity" min="1" required
-                                        class="block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm"
+                                        class="block w-full border-gray-300 dark:border-gray-600 focus:border-brand-500 focus:ring-brand-500 rounded-md shadow-sm text-sm"
                                         placeholder="Qty" />
                                 </div>
                                 <button type="button" @click="items.splice(index, 1)"
@@ -96,7 +96,7 @@
                         </template>
                     </div>
 
-                    <div class="flex items-center justify-end gap-4 mt-6 pt-4 border-t">
+                    <div class="flex items-center justify-end gap-4 mt-6 pt-4 border-t dark:border-gray-700">
                         <a href="{{ route('borrowings.index') }}">
                             <x-secondary-button type="button">Cancel</x-secondary-button>
                         </a>

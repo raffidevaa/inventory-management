@@ -65,7 +65,7 @@
     <div class="sm:col-span-2">
         <x-input-label for="image" value="Product Image (optional, max 2MB)" />
         <input id="image" name="image" type="file" accept="image/*"
-            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
+            class="mt-1 block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100" />
         <x-input-error :messages="$errors->get('image')" class="mt-2" />
     </div>
 
