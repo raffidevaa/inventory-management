@@ -1,6 +1,6 @@
 services:
   app:
-    image: ${APP_IMAGE:-asia-southeast1-docker.pkg.dev/PROJECT_ID/inventory-management-app/app:latest}
+    image: ${APP_IMAGE:-asia-southeast1-docker.pkg.dev/pso-7-494801/inventory-management-app/app:latest}
     restart: unless-stopped
     ports:
       - "80:80"
