@@ -9,71 +9,56 @@ use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use OpenApi\Attributes as OA;
+use Knuckles\Scribe\Attributes\BodyParam;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\QueryParam;
+use Knuckles\Scribe\Attributes\Response;
+use Knuckles\Scribe\Attributes\UrlParam;
 
+#[Group('Borrowings', 'Borrowing transactions and returns.')]
 class BorrowingApiController extends Controller
 {
     use ApiResponse;
 
-    #[OA\Get(
-        path: '/borrowings',
-        summary: 'List all borrowing transactions',
-        security: [['sanctum' => []]],
-        tags: ['Borrowings'],
-        parameters: [
-            new OA\Parameter(name: 'status', in: 'query', description: 'Filter by status', schema: new OA\Schema(type: 'string', enum: ['borrowed', 'returned', 'overdue'])),
-            new OA\Parameter(name: 'page', in: 'query', schema: new OA\Schema(type: 'integer', default: 1)),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Paginated borrowing list'),
-            new OA\Response(response: 401, description: 'Unauthenticated'),
-        ]
-    )]
+    /**
+     * List all borrowing transactions.
+     */
+    #[QueryParam('status', 'string', 'Filter by status.', required: false, enum: ['borrowed', 'returned', 'overdue'], example: 'borrowed')]
+    #[QueryParam('page', 'integer', 'Page number.', required: false, example: 1)]
+    #[Response(status: 200, content: [
+        'success' => true,
+        'message' => 'Data retrieved successfully',
+        'data' => [['id' => 1, 'borrower_name' => 'Budi Santoso', 'status' => 'borrowed', 'borrow_date' => '2026-07-02', 'due_date' => '2026-07-09']],
+        'meta' => ['current_page' => 1, 'last_page' => 2, 'per_page' => 15, 'total' => 18],
+    ])]
+    #[Response(status: 401, content: ['message' => 'Unauthenticated.'])]
     public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', Borrowing::class);
 
         $borrowings = Borrowing::with(['user', 'borrowingDetails.product'])
-            ->when($request->status, fn($q, $s) => $q->where('status', $s))
+            ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->latest()
             ->paginate(15);
 
         return $this->paginatedSuccess($borrowings);
     }
 
-    #[OA\Post(
-        path: '/borrowings',
-        summary: 'Create a new borrowing transaction (multi-item)',
-        security: [['sanctum' => []]],
-        tags: ['Borrowings'],
-        requestBody: new OA\RequestBody(
-            required: true,
-            content: new OA\JsonContent(
-                required: ['borrower_name', 'borrow_date', 'due_date', 'items'],
-                properties: [
-                    new OA\Property(property: 'borrower_name', type: 'string', example: 'Budi Santoso'),
-                    new OA\Property(property: 'borrow_date', type: 'string', format: 'date', example: '2026-07-02'),
-                    new OA\Property(property: 'due_date', type: 'string', format: 'date', example: '2026-07-09'),
-                    new OA\Property(property: 'notes', type: 'string', nullable: true),
-                    new OA\Property(
-                        property: 'items',
-                        type: 'array',
-                        items: new OA\Items(
-                            properties: [
-                                new OA\Property(property: 'product_id', type: 'integer', example: 3),
-                                new OA\Property(property: 'quantity', type: 'integer', example: 2),
-                            ]
-                        )
-                    ),
-                ]
-            )
-        ),
-        responses: [
-            new OA\Response(response: 201, description: 'Borrowing transaction created'),
-            new OA\Response(response: 403, description: 'Forbidden — Admin/Staff only'),
-            new OA\Response(response: 422, description: 'Validation error or insufficient stock'),
-        ]
-    )]
+    /**
+     * Create a new borrowing transaction (multi-item).
+     *
+     * Requires the Admin or Staff role.
+     */
+    #[BodyParam('borrower_name', 'string', 'Name of the borrower.', example: 'Budi Santoso')]
+    #[BodyParam('borrow_date', 'date', 'Date the items are borrowed.', example: '2026-07-02')]
+    #[BodyParam('due_date', 'date', 'Date the items are due back.', example: '2026-07-09')]
+    #[BodyParam('notes', 'string', 'Optional notes.', required: false)]
+    #[BodyParam('items', 'object[]', 'Items to borrow.')]
+    #[BodyParam('items[].product_id', 'integer', 'Existing product ID.', example: 3)]
+    #[BodyParam('items[].quantity', 'integer', 'Quantity to borrow.', example: 2)]
+    #[Response(status: 201, content: ['success' => true, 'message' => 'Borrowing transaction created successfully', 'data' => ['id' => 1, 'borrower_name' => 'Budi Santoso', 'status' => 'borrowed']])]
+    #[Response(status: 403, content: ['success' => false, 'message' => 'This action is unauthorized.'])]
+    #[Response(status: 422, content: ['success' => false, 'message' => "Insufficient stock for 'Laptop Dell Latitude'. Available: 1."])]
     public function store(Request $request): JsonResponse
     {
         $this->authorize('create', Borrowing::class);
@@ -130,19 +115,16 @@ class BorrowingApiController extends Controller
         );
     }
 
-    #[OA\Get(
-        path: '/borrowings/{id}',
-        summary: 'Get borrowing transaction detail',
-        security: [['sanctum' => []]],
-        tags: ['Borrowings'],
-        parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Borrowing detail with all items'),
-            new OA\Response(response: 404, description: 'Not found'),
-        ]
-    )]
+    /**
+     * Get borrowing transaction detail.
+     */
+    #[UrlParam('id', 'integer', 'The borrowing ID.', example: 1)]
+    #[Response(status: 200, content: [
+        'success' => true,
+        'message' => 'Data retrieved successfully',
+        'data' => ['id' => 1, 'borrower_name' => 'Budi Santoso', 'status' => 'borrowed', 'borrowing_details' => [['id' => 1, 'product_id' => 3, 'quantity' => 2, 'item_status' => 'borrowed']]],
+    ])]
+    #[Response(status: 404, content: ['message' => 'No query results for model [App\\Models\\Borrowing].'])]
     public function show(Borrowing $borrowing): JsonResponse
     {
         $this->authorize('view', $borrowing);
@@ -150,37 +132,17 @@ class BorrowingApiController extends Controller
         return $this->success($borrowing->load(['user', 'borrowingDetails.product']));
     }
 
-    #[OA\Patch(
-        path: '/borrowings/{id}/return',
-        summary: 'Process item return for a borrowing transaction',
-        security: [['sanctum' => []]],
-        tags: ['Borrowings'],
-        parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        requestBody: new OA\RequestBody(
-            required: true,
-            content: new OA\JsonContent(
-                required: ['items'],
-                properties: [
-                    new OA\Property(
-                        property: 'items',
-                        type: 'array',
-                        items: new OA\Items(
-                            properties: [
-                                new OA\Property(property: 'borrowing_detail_id', type: 'integer', example: 1),
-                                new OA\Property(property: 'condition_after', type: 'string', enum: ['good', 'lightly_damaged', 'heavily_damaged']),
-                            ]
-                        )
-                    ),
-                ]
-            )
-        ),
-        responses: [
-            new OA\Response(response: 200, description: 'Return processed successfully'),
-            new OA\Response(response: 403, description: 'Forbidden — Admin/Staff only'),
-        ]
-    )]
+    /**
+     * Process item return for a borrowing transaction.
+     *
+     * Requires the Admin or Staff role.
+     */
+    #[UrlParam('id', 'integer', 'The borrowing ID.', example: 1)]
+    #[BodyParam('items', 'object[]', 'Items being returned.')]
+    #[BodyParam('items[].borrowing_detail_id', 'integer', 'Existing borrowing detail ID.', example: 1)]
+    #[BodyParam('items[].condition_after', 'string', 'Item condition on return.', enum: ['good', 'lightly_damaged', 'heavily_damaged'], example: 'good')]
+    #[Response(status: 200, content: ['success' => true, 'message' => 'Return processed successfully', 'data' => ['id' => 1, 'status' => 'returned']])]
+    #[Response(status: 403, content: ['success' => false, 'message' => 'This action is unauthorized.'])]
     public function processReturn(Request $request, Borrowing $borrowing): JsonResponse
     {
         $this->authorize('processReturn', $borrowing);

@@ -7,45 +7,33 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use OpenApi\Attributes as OA;
+use Knuckles\Scribe\Attributes\BodyParam;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Response;
+use Knuckles\Scribe\Attributes\Unauthenticated;
 
+#[Group('Auth', 'Login and token management.')]
 class AuthApiController extends Controller
 {
     use ApiResponse;
 
-    #[OA\Post(
-        path: '/auth/login',
-        summary: 'Login and receive a Sanctum token',
-        tags: ['Auth'],
-        requestBody: new OA\RequestBody(
-            required: true,
-            content: new OA\JsonContent(
-                required: ['email', 'password'],
-                properties: [
-                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'admin@telkom.com'),
-                    new OA\Property(property: 'password', type: 'string', format: 'password', example: 'password123'),
-                ]
-            )
-        ),
-        responses: [
-            new OA\Response(
-                response: 200,
-                description: 'Login successful',
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'message', type: 'string', example: 'Login successful'),
-                        new OA\Property(property: 'data', type: 'object', properties: [
-                            new OA\Property(property: 'token', type: 'string', example: '1|abc123...'),
-                            new OA\Property(property: 'token_type', type: 'string', example: 'Bearer'),
-                        ]),
-                    ]
-                )
-            ),
-            new OA\Response(response: 401, description: 'Invalid credentials'),
-            new OA\Response(response: 422, description: 'Validation error'),
-        ]
-    )]
+    /**
+     * Login and receive a Sanctum token.
+     */
+    #[Unauthenticated]
+    #[BodyParam('email', 'string', 'The user email.', example: 'admin@telkom.com')]
+    #[BodyParam('password', 'string', 'The user password.', example: 'password123')]
+    #[Response(status: 200, content: [
+        'success' => true,
+        'message' => 'Login successful',
+        'data' => [
+            'token' => '1|abc123...',
+            'token_type' => 'Bearer',
+            'user' => ['id' => 1, 'name' => 'Admin', 'email' => 'admin@telkom.com', 'role' => 'admin'],
+        ],
+    ])]
+    #[Response(status: 401, content: ['success' => false, 'message' => 'Invalid credentials.'])]
+    #[Response(status: 422, content: ['success' => false, 'message' => 'The email field is required.'])]
     public function login(Request $request): JsonResponse
     {
         $credentials = $request->validate([
@@ -72,16 +60,11 @@ class AuthApiController extends Controller
         ], 'Login successful');
     }
 
-    #[OA\Post(
-        path: '/auth/logout',
-        summary: 'Revoke the current token',
-        security: [['sanctum' => []]],
-        tags: ['Auth'],
-        responses: [
-            new OA\Response(response: 200, description: 'Logged out successfully'),
-            new OA\Response(response: 401, description: 'Unauthenticated'),
-        ]
-    )]
+    /**
+     * Revoke the current token.
+     */
+    #[Response(status: 200, content: ['success' => true, 'message' => 'Logged out successfully', 'data' => null])]
+    #[Response(status: 401, content: ['message' => 'Unauthenticated.'])]
     public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();

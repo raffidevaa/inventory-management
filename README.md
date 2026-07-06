@@ -10,7 +10,7 @@ Built during a Telkom internship.
 - **Borrowing lifecycle** — record borrowings with borrower details, borrow/due dates, and per-item condition. Items are checked out and returned with status tracking (`borrowed` / `returned` / `overdue`).
 - **Role-based access control** — three roles (`admin`, `staff`, `manager`) enforced through policies and a `role` middleware.
 - **Dashboard** — summary metrics and charts.
-- **REST API** — versioned (`/api/v1`) and authenticated with Laravel Sanctum tokens, documented via Swagger (L5-Swagger / OpenAPI).
+- **REST API** — versioned (`/api/v1`) and authenticated with Laravel Sanctum tokens, documented with Scribe (interactive docs + OpenAPI spec).
 - **Image storage** — local disk by default, Google Cloud Storage in production.
 
 ## Tech Stack
@@ -20,7 +20,7 @@ Built during a Telkom internship.
 - **Laravel Sanctum** — API token authentication
 - **Laravel Breeze** — web auth scaffolding (Blade + Alpine.js)
 - **Tailwind CSS** 3 + Vite
-- **L5-Swagger** — OpenAPI documentation
+- **Scribe** — API documentation (interactive docs + OpenAPI spec)
 - **Google Cloud Storage** — production image storage
 - **Docker** + **Nginx** + **PHP-FPM** + **Supervisor** for deployment
 
@@ -121,10 +121,12 @@ curl http://localhost:8000/api/v1/products \
 
 ### API documentation
 
-Interactive Swagger UI is available at `/api/documentation`. Regenerate the OpenAPI spec after changing annotations:
+Interactive API documentation is generated with [Scribe](https://scribe.knuckles.wtf/laravel)
+from PHP attributes on the API controllers, and is available at `/docs`. An OpenAPI spec is
+served at `/docs.openapi`. Regenerate the docs after changing the attributes:
 
 ```bash
-php artisan l5-swagger:generate
+php artisan scribe:generate
 ```
 
 ## Testing

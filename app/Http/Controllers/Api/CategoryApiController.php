@@ -7,22 +7,24 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use OpenApi\Attributes as OA;
+use Knuckles\Scribe\Attributes\BodyParam;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Response;
 
+#[Group('Categories', 'Manage product categories.')]
 class CategoryApiController extends Controller
 {
     use ApiResponse;
 
-    #[OA\Get(
-        path: '/categories',
-        summary: 'List all categories',
-        security: [['sanctum' => []]],
-        tags: ['Categories'],
-        responses: [
-            new OA\Response(response: 200, description: 'Category list', content: new OA\JsonContent(ref: '#/components/schemas/ApiResponse')),
-            new OA\Response(response: 401, description: 'Unauthenticated'),
-        ]
-    )]
+    /**
+     * List all categories.
+     */
+    #[Response(status: 200, content: [
+        'success' => true,
+        'message' => 'Data retrieved successfully',
+        'data' => [['id' => 1, 'name' => 'Elektronik', 'description' => 'Perangkat elektronik kantor', 'products_count' => 12]],
+    ])]
+    #[Response(status: 401, content: ['message' => 'Unauthenticated.'])]
     public function index(): JsonResponse
     {
         $categories = Category::withCount('products')->get();
@@ -30,26 +32,15 @@ class CategoryApiController extends Controller
         return $this->success($categories);
     }
 
-    #[OA\Post(
-        path: '/categories',
-        summary: 'Create a new category (Admin/Staff only)',
-        security: [['sanctum' => []]],
-        tags: ['Categories'],
-        requestBody: new OA\RequestBody(
-            required: true,
-            content: new OA\JsonContent(
-                required: ['name'],
-                properties: [
-                    new OA\Property(property: 'name', type: 'string', example: 'Elektronik'),
-                    new OA\Property(property: 'description', type: 'string', nullable: true, example: 'Perangkat elektronik kantor'),
-                ]
-            )
-        ),
-        responses: [
-            new OA\Response(response: 201, description: 'Category created'),
-            new OA\Response(response: 403, description: 'Forbidden — Admin/Staff only'),
-        ]
-    )]
+    /**
+     * Create a new category.
+     *
+     * Requires the Admin or Staff role.
+     */
+    #[BodyParam('name', 'string', 'Category name.', example: 'Elektronik')]
+    #[BodyParam('description', 'string', 'Category description.', required: false, example: 'Perangkat elektronik kantor')]
+    #[Response(status: 201, content: ['success' => true, 'message' => 'Category created successfully', 'data' => ['id' => 1, 'name' => 'Elektronik', 'description' => 'Perangkat elektronik kantor']])]
+    #[Response(status: 403, content: ['success' => false, 'message' => 'This action is unauthorized.'])]
     public function store(Request $request): JsonResponse
     {
         $this->authorize('manage-inventory');
