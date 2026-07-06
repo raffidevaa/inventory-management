@@ -12,9 +12,14 @@ cd /var/www/html
 echo "[entrypoint] running migrations…"
 php artisan migrate --force
 
-echo "[entrypoint] caching config, routes, views…"
+echo "[entrypoint] caching config and routes…"
 php artisan config:cache
 php artisan route:cache
+
+echo "[entrypoint] generating API docs…"
+php artisan scribe:generate
+
+echo "[entrypoint] caching views…"
 php artisan view:cache
 
 # storage:link only matters when serving files from the local/public disk
