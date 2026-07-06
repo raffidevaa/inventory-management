@@ -1,11 +1,5 @@
 <?php
 
-use Knuckles\Scribe\Config\AuthIn;
-use Knuckles\Scribe\Config\Defaults;
-use Knuckles\Scribe\Extracting\Strategies;
-
-use function Knuckles\Scribe\Config\removeStrategies;
-
 // Only the most common configs are shown. See the https://scribe.knuckles.wtf/laravel/reference/config for all.
 
 return [
@@ -111,7 +105,7 @@ return [
         'default' => true,
 
         // Where is the auth value meant to be sent in a request?
-        'in' => AuthIn::BEARER->value,
+        'in' => 'bearer',
 
         // The name of the auth parameter (e.g. token, key, apiKey) or header (e.g. Authorization, Api-Key).
         'name' => 'Authorization',
@@ -210,36 +204,48 @@ return [
     ],
 
     // The strategies Scribe will use to extract information about your routes at each stage.
-    // Use configureStrategy() to specify settings for a strategy in the list.
-    // Use removeStrategies() to remove an included strategy.
     'strategies' => [
         'metadata' => [
-            ...Defaults::METADATA_STRATEGIES,
+            \Knuckles\Scribe\Extracting\Strategies\Metadata\GetFromDocBlocks::class,
+            \Knuckles\Scribe\Extracting\Strategies\Metadata\GetFromMetadataAttributes::class,
         ],
         'headers' => [
-            ...Defaults::HEADERS_STRATEGIES,
-            Strategies\StaticData::withSettings(data: [
+            \Knuckles\Scribe\Extracting\Strategies\Headers\GetFromHeaderAttribute::class,
+            \Knuckles\Scribe\Extracting\Strategies\Headers\GetFromHeaderTag::class,
+            [\Knuckles\Scribe\Extracting\Strategies\StaticData::class, ['data' => [
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
-            ]),
+            ]]],
         ],
         'urlParameters' => [
-            ...Defaults::URL_PARAMETERS_STRATEGIES,
+            \Knuckles\Scribe\Extracting\Strategies\UrlParameters\GetFromLaravelAPI::class,
+            \Knuckles\Scribe\Extracting\Strategies\UrlParameters\GetFromUrlParamAttribute::class,
+            \Knuckles\Scribe\Extracting\Strategies\UrlParameters\GetFromUrlParamTag::class,
         ],
         'queryParameters' => [
-            ...Defaults::QUERY_PARAMETERS_STRATEGIES,
+            \Knuckles\Scribe\Extracting\Strategies\QueryParameters\GetFromFormRequest::class,
+            \Knuckles\Scribe\Extracting\Strategies\QueryParameters\GetFromInlineValidator::class,
+            \Knuckles\Scribe\Extracting\Strategies\QueryParameters\GetFromQueryParamAttribute::class,
+            \Knuckles\Scribe\Extracting\Strategies\QueryParameters\GetFromQueryParamTag::class,
         ],
         'bodyParameters' => [
-            ...Defaults::BODY_PARAMETERS_STRATEGIES,
+            \Knuckles\Scribe\Extracting\Strategies\BodyParameters\GetFromFormRequest::class,
+            \Knuckles\Scribe\Extracting\Strategies\BodyParameters\GetFromInlineValidator::class,
+            \Knuckles\Scribe\Extracting\Strategies\BodyParameters\GetFromBodyParamAttribute::class,
+            \Knuckles\Scribe\Extracting\Strategies\BodyParameters\GetFromBodyParamTag::class,
         ],
-        'responses' => removeStrategies(
-            Defaults::RESPONSES_STRATEGIES,
-            // Endpoints are Sanctum-protected and responses are documented explicitly via
-            // #[Response] attributes, so skip live response calls for deterministic generation.
-            [Strategies\Responses\ResponseCalls::class],
-        ),
+        // ResponseCalls excluded: endpoints are Sanctum-protected and responses are
+        // documented explicitly via #[Response] attributes for deterministic generation.
+        'responses' => [
+            \Knuckles\Scribe\Extracting\Strategies\Responses\UseResponseAttributes::class,
+            \Knuckles\Scribe\Extracting\Strategies\Responses\UseTransformerTags::class,
+            \Knuckles\Scribe\Extracting\Strategies\Responses\UseApiResourceTags::class,
+            \Knuckles\Scribe\Extracting\Strategies\Responses\UseResponseTag::class,
+            \Knuckles\Scribe\Extracting\Strategies\Responses\UseResponseFileTag::class,
+        ],
         'responseFields' => [
-            ...Defaults::RESPONSE_FIELDS_STRATEGIES,
+            \Knuckles\Scribe\Extracting\Strategies\ResponseFields\GetFromResponseFieldAttribute::class,
+            \Knuckles\Scribe\Extracting\Strategies\ResponseFields\GetFromResponseFieldTag::class,
         ],
     ],
 
