@@ -18,7 +18,7 @@ COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
 WORKDIR /app
 
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --no-interaction
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --no-interaction --ignore-platform-req=ext-gd
 
 COPY app ./app
 COPY bootstrap ./bootstrap
